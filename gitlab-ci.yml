@@ -1,0 +1,9 @@
+stages:
+  - digital_twin
+
+digital_twin_analysis:
+  stage: digital_twin
+  image: python:3.11
+  script:
+    - pip install -r requirements.txt
+    - python agent/main.py

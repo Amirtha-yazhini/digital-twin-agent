@@ -1,9 +1,38 @@
+# .gitlab-ci.yml
 stages:
+  - test
   - digital_twin
 
-digital_twin_analysis:
-  stage: digital_twin
+# ── Your existing test stage (unchanged) ─────────────────────────
+run_tests:
+  stage: test
   image: python:3.11
   script:
     - pip install -r requirements.txt
+    - python -m pytest tests/ -v
+  only:
+    - merge_requests
+    - main
+
+# ── Digital Twin Agent ────────────────────────────────────────────
+digital_twin_analysis:
+  stage: digital_twin
+  image: python:3.11
+  before_script:
+    - pip install -r requirements.txt
+  script:
     - python agent/main.py
+  only:
+    - merge_requests
+  variables:
+    # These must be set in GitLab → Settings → CI/CD → Variables
+    GITLAB_TOKEN: $GITLAB_TOKEN
+    ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY
+  allow_failure: false   # Pipeline fails if agent blocks the MR
+  artifacts:
+    reports:
+      # Expose analysis as a CI artifact (optional)
+      dotenv: digital_twin_report.env
+    paths:
+      - /tmp/digital_twin_memory.json
+    expire_in: 30 days
